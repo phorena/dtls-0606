@@ -290,7 +290,7 @@ impl DTLSConn {
         let cipher_suite1 = Arc::clone(&c.state.cipher_suite);
         let sequence_number = Arc::clone(&c.state.local_sequence_number);
 
-        // *NOTE* handle outgoing packets
+        // *NOTE* EXO handle outgoing packets
         tokio::spawn(async move {
             loop {
                 let rx = packet_rx.recv().await;
@@ -322,7 +322,7 @@ impl DTLSConn {
         let remote_epoch = Arc::clone(&c.state.remote_epoch);
         let cipher_suite2 = Arc::clone(&c.state.cipher_suite);
 
-        // *NOTE* handle incoming packets
+        // *NOTE* EXO handle incoming packets
         tokio::spawn(async move {
             let mut buf = vec![0u8; INBOUND_BUFFER_SIZE];
             let mut ctx = ConnReaderContext {
@@ -746,7 +746,7 @@ impl DTLSConn {
         self.handshake_completed_successfully.load(Ordering::SeqCst)
     }
 
-    async fn read_and_buffer(
+    async fn read_and_buffer( // XXX
         ctx: &mut ConnReaderContext,
         next_conn: &Arc<dyn util::Conn + Send + Sync>,
         handle_queue_rx: &mut mpsc::Receiver<mpsc::Sender<()>>,
@@ -755,7 +755,7 @@ impl DTLSConn {
         handshake_completed_successfully: &Arc<AtomicBool>,
     ) -> Result<()> {
         // TODO print buffer for debugging
-        let n = next_conn.recv(buf).await?;
+        let n = next_conn.recv(buf).await?; // *NOTE* XXX receive data from lower layer, and from next_conn.
         dbg!(n);
         // one buffer may contain multiple DTLS packets
         let pkts = unpack_datagram(&buf[..n])?;
