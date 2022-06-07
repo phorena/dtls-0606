@@ -7,10 +7,12 @@ use crate::error::*;
 use crate::extension::extension_use_srtp::*;
 use crate::signature_hash_algorithm::*;
 
-use log::*;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
+
+use log::trace;
+use trace_caller::*;
 
 //use std::io::BufWriter;
 
@@ -49,7 +51,7 @@ use std::sync::Arc;
 //              Read retransmit
 //           Retransmit last flight
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub(crate) enum HandshakeState {
     Errored,
     Preparing,
@@ -209,6 +211,7 @@ impl DTLSConn {
                 self.handshake_done_tx.take(); // drop it by take
                 return Ok(());
             }
+            dbg!(&state);
 
             state = match state {
                 HandshakeState::Preparing => self.prepare().await?,
@@ -217,14 +220,19 @@ impl DTLSConn {
                 HandshakeState::Finished => self.finish().await?,
                 _ => return Err(Error::ErrInvalidFsmTransition),
             };
+            dbg!(&state);
         }
     }
 
+    #[trace_caller::trace]
     async fn prepare(&mut self) -> Result<HandshakeState> {
+        dbg!("prepare 0100");
         self.flights = None;
 
         // Prepare flights
         self.retransmit = self.current_flight.has_retransmit();
+        dbg!(&self.current_flight);
+        dbg!(&self.retransmit);
 
         let result = self
             .current_flight

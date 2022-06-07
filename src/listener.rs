@@ -12,6 +12,7 @@ use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio::net::ToSocketAddrs;
+use tokio::sync::{mpsc, Mutex};
 use util::{conn::conn_udp_listener::*, conn::*};
 
 /// Listen creates a DTLS listener
@@ -45,13 +46,20 @@ pub async fn listen<A: 'static + ToSocketAddrs>(laddr: A, config: Config) -> Res
     };
 
     let parent = Arc::new(lc.listen(laddr).await?);
-    Ok(DTLSListener { parent, config })
+    let (_poll_tx, poll_rx) = mpsc::channel(1);
+    Ok(DTLSListener {
+        parent,
+        config,
+        poll_rx,
+    })
+    // Ok(DTLSListener { parent, config })
 }
 
 /// DTLSListener represents a DTLS listener
 pub struct DTLSListener {
     parent: Arc<dyn Listener + Send + Sync>,
     config: Config,
+    poll_rx: mpsc::Receiver<DTLSConn>,
 }
 
 impl DTLSListener {
@@ -59,7 +67,17 @@ impl DTLSListener {
     pub fn new(parent: Arc<dyn Listener + Send + Sync>, config: Config) -> Result<Self> {
         validate_config(false, &config)?;
 
-        Ok(DTLSListener { parent, config })
+        let (_poll_tx, poll_rx) = mpsc::channel(1);
+        Ok(DTLSListener {
+            parent,
+            config,
+            poll_rx,
+        })
+        // Ok(DTLSListener { parent, config })
+    }
+    async fn poll(&mut self) -> UtilResult<Arc<DTLSConn>> {
+        let conn = self.poll_rx.recv().await;
+        Ok(Arc::new(conn.unwrap()))
     }
 }
 

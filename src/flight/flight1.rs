@@ -23,12 +23,15 @@ use async_trait::async_trait;
 use std::fmt;
 use std::sync::atomic::Ordering;
 
+// extern crate trace_caller;
+use trace_caller::trace;
+
 #[derive(Debug, PartialEq)]
 pub(crate) struct Flight1;
 
 impl fmt::Display for Flight1 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Flight 1")
+        write!(f, "Flight 001")
     }
 }
 
@@ -115,6 +118,7 @@ impl Flight for Flight1 {
         }
     }
 
+    #[trace]
     async fn generate(
         &self,
         state: &mut State,

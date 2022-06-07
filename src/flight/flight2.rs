@@ -10,6 +10,8 @@ use crate::record_layer::record_layer_header::*;
 use async_trait::async_trait;
 use std::fmt;
 
+use trace_caller::*;
+
 #[derive(Debug, PartialEq)]
 pub(crate) struct Flight2;
 
@@ -25,6 +27,7 @@ impl Flight for Flight2 {
         false
     }
 
+    #[trace]
     async fn parse(
         &self,
         tx: &mut mpsc::Sender<mpsc::Sender<()>>,
@@ -51,6 +54,7 @@ impl Flight for Flight2 {
             // Parse as flight 0 in this case.
             Err(_) => return Flight0 {}.parse(tx, state, cache, cfg).await,
         };
+        dbg!(02000);
 
         state.handshake_recv_sequence = seq;
 

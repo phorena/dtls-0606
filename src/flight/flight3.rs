@@ -24,8 +24,10 @@ use crate::{find_matching_cipher_suite, find_matching_srtp_profile};
 
 use crate::extension::renegotiation_info::ExtensionRenegotiationInfo;
 use async_trait::async_trait;
-use log::*;
 use std::fmt;
+
+use log::{debug, error, info, trace, warn};
+use trace_caller::*;
 
 #[derive(Debug, PartialEq)]
 pub(crate) struct Flight3;
@@ -38,6 +40,7 @@ impl fmt::Display for Flight3 {
 
 #[async_trait]
 impl Flight for Flight3 {
+    #[trace_caller::trace]
     async fn parse(
         &self,
         _tx: &mut mpsc::Sender<mpsc::Sender<()>>,

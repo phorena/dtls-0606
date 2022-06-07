@@ -290,6 +290,7 @@ impl DTLSConn {
         let cipher_suite1 = Arc::clone(&c.state.cipher_suite);
         let sequence_number = Arc::clone(&c.state.local_sequence_number);
 
+        // *NOTE* handle outgoing packets
         tokio::spawn(async move {
             loop {
                 let rx = packet_rx.recv().await;
@@ -321,6 +322,7 @@ impl DTLSConn {
         let remote_epoch = Arc::clone(&c.state.remote_epoch);
         let cipher_suite2 = Arc::clone(&c.state.cipher_suite);
 
+        // *NOTE* handle incoming packets
         tokio::spawn(async move {
             let mut buf = vec![0u8; INBOUND_BUFFER_SIZE];
             let mut ctx = ConnReaderContext {
@@ -752,7 +754,10 @@ impl DTLSConn {
         local_epoch: &Arc<AtomicU16>,
         handshake_completed_successfully: &Arc<AtomicBool>,
     ) -> Result<()> {
+        // TODO print buffer for debugging
         let n = next_conn.recv(buf).await?;
+        dbg!(n);
+        // one buffer may contain multiple DTLS packets
         let pkts = unpack_datagram(&buf[..n])?;
         let mut has_handshake = false;
         for pkt in pkts {
@@ -878,10 +883,12 @@ impl DTLSConn {
         Ok(())
     }
 
+    // *NOTE*
     async fn handle_incoming_packet(
         ctx: &mut ConnReaderContext,
         mut pkt: Vec<u8>,
         enqueue: bool,
+        // handshake or not
     ) -> (bool, Option<Alert>, Option<Error>) {
         let mut reader = BufReader::new(pkt.as_slice());
         let h = match RecordLayerHeader::unmarshal(&mut reader) {
