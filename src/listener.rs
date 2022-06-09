@@ -90,7 +90,7 @@ impl Listener for DTLSListener {
     /// Connection handshake will timeout using ConnectContextMaker in the Config.
     /// If you want to specify the timeout duration, set ConnectContextMaker.
     async fn accept(&self) -> UtilResult<(Arc<dyn Conn + Send + Sync>, SocketAddr)> {
-        // *NOTE*
+        // *NOTE* EXO parent is the UDP listener
         let (conn, raddr) = self.parent.accept().await?;
         let dtls_conn = DTLSConn::new(conn, self.config.clone(), false, None)
             .await
