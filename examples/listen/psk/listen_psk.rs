@@ -1,6 +1,10 @@
+use async_channel::{unbounded, Receiver, Sender};
+use bytes::Bytes;
 use clap::{App, AppSettings, Arg};
 use std::io::Write;
+use std::net::SocketAddr;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use util::conn::*;
 use webrtc_dtls::cipher_suite::CipherSuiteId;
 use webrtc_dtls::config::ExtendedMasterSecretType;
@@ -71,10 +75,13 @@ async fn main() -> Result<(), Error> {
     let listener = Arc::new(listen(host, cfg).await?);
 
     // Simulate a chat session
-    let h = Arc::new(hub::Hub::new());
+    let (tx, rx): (Sender<(SocketAddr, Bytes)>, Receiver<(SocketAddr, Bytes)>) = unbounded();
+    // let h = Arc::new(hub::Hub::new());
+    let tx = Arc::new(Mutex::new(tx));
+    let h1 = Arc::new(hub::Hub2::new(tx));
 
     let listener2 = Arc::clone(&listener);
-    let h2 = Arc::clone(&h);
+    let h2 = Arc::clone(&h1);
     tokio::spawn(async move {
         while let Ok((dtls_conn, _remote_addr)) = listener2.accept().await {
             // Register the connection with the chat hub
@@ -82,7 +89,14 @@ async fn main() -> Result<(), Error> {
         }
     });
 
-    h.chat().await;
+    tokio::spawn(async move {
+        while let Ok((addr, bytes)) = rx.recv().await {
+            println!("***************** {:?}", addr);
+            dbg!(addr);
+        }
+    });
+
+    h1.chat().await;
 
     Ok(listener.close().await?)
 }

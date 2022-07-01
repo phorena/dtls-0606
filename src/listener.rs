@@ -12,7 +12,7 @@ use std::net::SocketAddr;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio::net::ToSocketAddrs;
-use tokio::sync::{mpsc, Mutex};
+use tokio::sync::mpsc;
 use util::{conn::conn_udp_listener::*, conn::*};
 
 /// Listen creates a DTLS listener

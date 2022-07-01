@@ -5,6 +5,10 @@ use util::conn::*;
 use webrtc_dtls::config::ExtendedMasterSecretType;
 use webrtc_dtls::Error;
 use webrtc_dtls::{config::Config, crypto::Certificate, listener::listen};
+use async_channel::{unbounded, Receiver, Sender, TryRecvError};
+use bytes::Bytes;
+use std::net::SocketAddr;
+use tokio::sync::Mutex;
 
 // cargo run --example listen_selfsign -- --host 127.0.0.1:4444
 
@@ -68,6 +72,52 @@ async fn main() -> Result<(), Error> {
     let listener = Arc::new(listen(host, cfg).await?);
 
     // Simulate a chat session
+    let (tx, rx): (Sender<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync>)>, Receiver<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync>)>) = unbounded();
+    // let h = Arc::new(hub::Hub::new());
+    let tx = Arc::new(Mutex::new(tx));
+    let h1 = Arc::new(hub::Hub2::new(tx));
+    let rx2 = rx.clone();
+
+    let listener2 = Arc::clone(&listener);
+    let h2 = Arc::clone(&h1);
+    let h3 = Arc::clone(&h1);
+    tokio::spawn(async move {
+        while let Ok((dtls_conn, _remote_addr)) = listener2.accept().await {
+            // Register the connection with the chat hub
+            h2.register(dtls_conn).await;
+        }
+    });
+
+    tokio::spawn(async move {
+        loop { 
+            match rx2.try_recv() {
+                Ok((addr, data, conn)) => {
+                    println!("*******************{:?} {:?}", addr, data);
+                    // listener.send(addr, data).await?;
+                    // conn.send("hello".as_bytes()).await;
+                    let conn2 = h3.get_conn(addr).await.unwrap();
+                    conn2.send("hello there************************".as_bytes()).await;
+                }
+                Err(TryRecvError::Empty) => {
+                    continue;
+                }
+                Err(why) => {
+                    println!("{:?}", why);
+                    break;
+                }
+            }
+
+        }
+    });
+
+    h1.chat().await;
+
+    Ok(listener.close().await?)
+
+    /*
+    let listener = Arc::new(listen(host, cfg).await?);
+
+    // Simulate a chat session
     let h = Arc::new(hub::Hub::new());
 
     let listener2 = Arc::clone(&listener);
@@ -82,4 +132,5 @@ async fn main() -> Result<(), Error> {
     h.chat().await;
 
     Ok(listener.close().await?)
+    */
 }

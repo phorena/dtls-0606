@@ -41,7 +41,7 @@ async fn main() -> Result<(), Error> {
             Arg::with_name("server")
                 .required_unless("FULLHELP")
                 .takes_value(true)
-                .default_value("127.0.0.1:4444")
+                .default_value("127.0.0.1:63000")
                 .long("server")
                 .help("DTLS Server name."),
         );

@@ -746,7 +746,8 @@ impl DTLSConn {
         self.handshake_completed_successfully.load(Ordering::SeqCst)
     }
 
-    async fn read_and_buffer( // XXX
+    async fn read_and_buffer(
+        // XXX
         ctx: &mut ConnReaderContext,
         next_conn: &Arc<dyn util::Conn + Send + Sync>,
         handle_queue_rx: &mut mpsc::Receiver<mpsc::Sender<()>>,
@@ -1031,6 +1032,8 @@ impl DTLSConn {
             return (true, None, None);
         }
 
+        //        dbg!(pkt.len());
+        //        dbg!(pkt.clone());
         let mut reader = BufReader::new(pkt.as_slice());
         let r = match RecordLayer::unmarshal(&mut reader) {
             Ok(r) => r,
@@ -1045,6 +1048,7 @@ impl DTLSConn {
                 );
             }
         };
+        dbg!(r.content.clone());
 
         match r.content {
             Content::Alert(mut a) => {

@@ -12,6 +12,7 @@ repository = "https://github.com/webrtc-rs/dtls"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-channel = "1.6.1"
 util = { package = "webrtc-util", version = "0.5.3", default-features = false, features = ["conn"] }
 byteorder = "1.4.3"
 rand_core = "0.6.3"
@@ -47,12 +48,14 @@ thiserror = "1.0.30"
 backtrace = "0.3.64"
 trace_caller_macro = { version = "0.1.0", path = "/mnt/OneTB/repos/trace_caller/trace_caller_macro" }
 trace_caller = { version = "0.2.0", path = "/mnt/OneTB/repos/trace_caller" }
+bytes = "1.1.0"
 
 [dev-dependencies]
 tokio-test = "0.4.2"
 env_logger = "0.9.0"
 chrono = "0.4.19"
 clap = "2.34.0"
+async-channel = "1.6.1"
 hub = {path = "examples/hub"}
 
 [[example]]
