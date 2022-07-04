@@ -1,10 +1,9 @@
-use async_channel::{unbounded, Receiver, Sender, TryRecvError};
+use crossbeam::channel::{unbounded, Receiver, Sender, TryRecvError};
 use bytes::Bytes;
 use clap::{App, AppSettings, Arg};
 use std::io::Write;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use util::conn::*;
 use webrtc_dtls::config::ExtendedMasterSecretType;
 use webrtc_dtls::Error;
@@ -77,7 +76,7 @@ async fn main() -> Result<(), Error> {
         Receiver<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync>)>,
     ) = unbounded();
     // let h = Arc::new(hub::Hub::new());
-    let tx = Arc::new(Mutex::new(tx));
+    let tx = Arc::new(tx);
     let h1 = Arc::new(hub::Hub2::new(tx));
     let rx2 = rx.clone();
 
@@ -97,7 +96,7 @@ async fn main() -> Result<(), Error> {
                 Ok((addr, data, _conn)) => {
                     println!("*******************{:?} {:?}", addr, data);
                     // listener.send(addr, data).await?;
-                    // conn.send("hello".as_bytes()).await;
+                    _conn.send("hello".as_bytes()).await;
                     let conn2 = h3.get_conn(addr).await.unwrap();
                     let _result = conn2
                         .send("hello there************************".as_bytes())
@@ -107,7 +106,7 @@ async fn main() -> Result<(), Error> {
                     continue;
                 }
                 Err(why) => {
-                    println!("{:?}", why);
+                    println!("&&&&&&&&&&&&&&&&&&{:?}", why);
                     break;
                 }
             }

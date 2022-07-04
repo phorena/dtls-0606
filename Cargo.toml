@@ -49,6 +49,7 @@ backtrace = "0.3.64"
 trace_caller_macro = { version = "0.1.0", path = "/mnt/OneTB/repos/trace_caller/trace_caller_macro" }
 trace_caller = { version = "0.2.0", path = "/mnt/OneTB/repos/trace_caller" }
 bytes = "1.1.0"
+crossbeam = "0.8.1"
 
 [dev-dependencies]
 tokio-test = "0.4.2"

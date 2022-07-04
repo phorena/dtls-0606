@@ -18,4 +18,4 @@ fleet.toml
 
 out*
 target
-typescript
+typescript*

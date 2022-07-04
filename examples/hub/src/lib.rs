@@ -3,7 +3,7 @@
 
 pub mod utilities;
 
-use async_channel::{Sender, Receiver};
+use crossbeam::channel::{Sender, Receiver};
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::sync::Arc;
@@ -22,13 +22,13 @@ const BUF_SIZE: usize = 8192;
 pub struct Hub2 {
     //tx: Sender<SocketAddr >,
     //tx2: Sender<SocketAddr >,
-    channel_tx: Arc<Mutex<Sender<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync>)>>>,
+    channel_tx: Arc<Sender<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync>)>>,
     conns: Arc<Mutex<HashMap<String, Arc<dyn Conn + Send + Sync>>>>,
 }
 
 impl Hub2 {
     /// new builds a new hub
-    pub fn new(channel_tx: Arc<Mutex<Sender<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync> )>>>) -> Self {
+    pub fn new(channel_tx: Arc<Sender<(SocketAddr, Bytes, Arc<dyn Conn + Send + Sync> )>>) -> Self {
     // pub fn new() -> Self {
         Hub2 {
             conns: Arc::new(Mutex::new(HashMap::new())),
@@ -64,24 +64,25 @@ impl Hub2 {
 
     async fn read_loop(
         remote_addr: SocketAddr,
-        channel_tx: Arc<Mutex<Sender<(SocketAddr, Bytes , Arc<dyn Conn + Send + Sync>)>>>,
+        channel_tx: Arc<Sender<(SocketAddr, Bytes , Arc<dyn Conn + Send + Sync>)>>,
         conns: Arc<Mutex<HashMap<String, Arc<dyn Conn + Send + Sync>>>>,
         conn: Arc<dyn Conn + Send + Sync>,
     ) -> Result<(), Error> {
         let mut b = vec![0u8; BUF_SIZE];
 
-        let channel_tx = channel_tx.lock().await;
+        // let channel_tx = channel_tx.lock().await;
 
         while let Ok(n) = conn.recv(&mut b).await {
             let msg = String::from_utf8(b[..n].to_vec())?;
             let bytes = Bytes::from(msg.to_owned());
             let conn2 = Arc::clone(&conn);
-            let result = channel_tx.send((remote_addr, bytes, conn2)).await;
+            // let result = channel_tx.send((remote_addr, bytes, conn2)).await;
+            let result = channel_tx.send((remote_addr, bytes, conn2));
             dbg!(result);
             print!("Got message: {}", msg);
         }
 
-        Hub::unregister(conns, conn).await
+        Hub2::unregister(conns, conn).await
     }
 
     async fn unregister(

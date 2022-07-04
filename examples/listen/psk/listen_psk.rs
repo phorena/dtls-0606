@@ -75,10 +75,7 @@ async fn main() -> Result<(), Error> {
     let listener = Arc::new(listen(host, cfg).await?);
 
     // Simulate a chat session
-    let (tx, rx): (Sender<(SocketAddr, Bytes)>, Receiver<(SocketAddr, Bytes)>) = unbounded();
-    // let h = Arc::new(hub::Hub::new());
-    let tx = Arc::new(Mutex::new(tx));
-    let h1 = Arc::new(hub::Hub2::new(tx));
+    let h1 = Arc::new(hub::Hub::new());
 
     let listener2 = Arc::clone(&listener);
     let h2 = Arc::clone(&h1);
